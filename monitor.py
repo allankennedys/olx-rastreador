@@ -79,7 +79,8 @@ def enviar(token, chat_id, a):
 def main():
     p = argparse.ArgumentParser(description="Avisa no Telegram sobre anúncios novos de video game na OLX.")
     p.add_argument("termos", nargs="*", help="termos de busca (padrão: lista de consoles)")
-    p.add_argument("-c", "--categoria", choices=CATEGORIAS, default="qualquer")
+    p.add_argument("-c", "--categoria", choices=CATEGORIAS, default="todos",
+                   help="todos = categoria Games (padrão); qualquer = toda a OLX, traz switch de rede, teclado etc.")
     p.add_argument("--cidades", help='só essas cidades, separadas por vírgula, ex: "Feira de Santana, Serrinha"')
     p.add_argument("--bairros", help='só esses bairros, ex: "Centro, Tomba, Santa Mônica"')
     p.add_argument("--so-feira", action="store_true")
