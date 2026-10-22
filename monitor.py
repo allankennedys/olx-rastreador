@@ -18,7 +18,7 @@ from pathlib import Path
 
 from curl_cffi import requests
 
-from olx_games import CATEGORIAS, TERMOS_PADRAO, buscar_varios, lista
+from olx_games import CATEGORIAS, TERMOS_PADRAO, buscar_varios, lista, sem_acento
 
 PASTA = Path(__file__).resolve().parent
 ESTADO = PASTA / "vistos.json"
@@ -47,6 +47,12 @@ def legenda(a):
         linhas.append("🔄 Aceita troca")
     linhas.append(f'\n<a href="{html.escape(a["url"])}">Ver anúncio na OLX</a>')
     return "\n".join(linhas)
+
+
+def assinatura(a):
+    """Identifica o mesmo anúncio apagado e repostado (ganha id novo, mas o resto é igual)."""
+    titulo = " ".join(sem_acento(a["titulo"]).split())
+    return f"{titulo}|{a['preco']}|{sem_acento(a['cidade'])}|{sem_acento(a['bairro'])}"
 
 
 def enviar(token, chat_id, a):
@@ -114,15 +120,24 @@ def main():
         log(f"mensagem de teste enviada para {len(chats)} contato(s)")
         return
 
+    # vistos guarda ids (int) e assinaturas (str) no mesmo conjunto
     vistos = set(json.loads(ESTADO.read_text())) if not primeira_vez else set()
+    for a in anuncios:
+        if a["id"] in vistos:
+            vistos.add(assinatura(a))  # completa o registro antigo, que só tinha ids
     novos = [a for a in anuncios if a["id"] not in vistos]
 
     if primeira_vez:
-        vistos |= {a["id"] for a in novos}
+        vistos |= {a["id"] for a in novos} | {assinatura(a) for a in novos}
         log(f"primeira execução: {len(novos)} anúncios registrados, sem notificar")
     else:
         # mais antigo primeiro, assim o mais recente fica no fim da conversa
+        enviados = 0
         for a in reversed(novos):
+            if assinatura(a) in vistos:
+                log(f"  repostagem ignorada: {a['titulo']} ({a['id']})")
+                vistos.add(a["id"])
+                continue
             entregues = 0
             for chat_id in chats:
                 try:
@@ -132,10 +147,11 @@ def main():
                     log(f"falha ao enviar {a['id']} para {chat_id}: {e}")
             if not entregues:
                 continue  # fica fora dos vistos e tenta de novo na próxima hora
-            vistos.add(a["id"])
+            vistos |= {a["id"], assinatura(a)}
+            enviados += 1
             salvar_estado(vistos)  # a cada envio, para não repetir se o PC desligar no meio
             time.sleep(1.2)
-        log(f"{len(novos)} anúncios novos notificados")
+        log(f"{enviados} anúncios novos notificados")
 
     salvar_estado(vistos)
 
@@ -143,7 +159,7 @@ def main():
 def salvar_estado(vistos):
     # grava num temporário e renomeia: se cair a energia no meio, o arquivo antigo continua inteiro
     tmp = ESTADO.with_suffix(".tmp")
-    tmp.write_text(json.dumps(sorted(vistos)))
+    tmp.write_text(json.dumps(sorted(vistos, key=str)))
     tmp.replace(ESTADO)
 
 

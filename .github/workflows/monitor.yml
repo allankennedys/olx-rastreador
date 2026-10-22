@@ -39,10 +39,11 @@ jobs:
         run: python monitor.py ${{ inputs.teste && '--teste ps5 -c consoles -p 1' || '' }}
 
       - name: Salvar anúncios já vistos
-        if: ${{ !inputs.teste }}
+        # always(): mesmo se o monitor falhar no meio, guarda o que já foi enviado
+        if: ${{ always() && !inputs.teste }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git add vistos.json
           git diff --cached --quiet || git commit -m "vistos: $(date -u +%Y-%m-%dT%H:%M)"
-          git push
+          git pull --rebase --quiet && git push
