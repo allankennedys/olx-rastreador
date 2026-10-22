@@ -44,4 +44,3 @@ Sem termos, usa a lista padrão (ps5, ps4, xbox, switch, video game, console...)
    ```
    0 * * * * cd /home/kennedy/olx-games-scraper && .venv/bin/python monitor.py >> monitor.log 2>&1
    ```
-# olx-rastreador
