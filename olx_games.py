@@ -37,6 +37,7 @@ TERMOS_PADRAO = [
     "controle switch", "joy-con", "joycon", "pro controller", "controle nintendo",
     "controle video game", "controle videogame", "controle playstation", "gamesir", "8bitdo",
 ]
+NAVEGADORES = ["chrome", "edge", "safari"]  # o Cloudflare às vezes barra uma assinatura e libera outra
 MAX_PAGINAS = 100  # a OLX não serve além da página 100
 CAMPOS = [
     "id", "titulo", "termos", "preco", "preco_antigo", "categoria", "marca", "modelo",
@@ -115,8 +116,12 @@ def preco_para_numero(texto):
 
 def buscar(categoria="todos", cidade=None, busca=None, paginas=1, recentes=True,
            preco_min=None, preco_max=None, pausa=(1.5, 3.5), log=print):
-    sessao = requests.Session(impersonate="chrome")
-    sessao.headers.update({"Accept-Language": "pt-BR,pt;q=0.9"})
+    def nova_sessao(navegador):
+        s = requests.Session(impersonate=navegador)
+        s.headers.update({"Accept-Language": "pt-BR,pt;q=0.9"})
+        return s
+
+    sessao = nova_sessao("chrome")
     vistos, anuncios = set(), []
     for pagina in range(1, min(paginas, MAX_PAGINAS) + 1):
         url = montar_url(categoria, cidade, busca, pagina, recentes, preco_min, preco_max)
@@ -129,7 +134,9 @@ def buscar(categoria="todos", cidade=None, busca=None, paginas=1, recentes=True,
             if status == 200:
                 break
             log(f"  HTTP {status} em {url}, tentando de novo...")
-            time.sleep(10 * (tentativa + 1))
+            if status == 403:
+                sessao = nova_sessao(NAVEGADORES[(tentativa + 1) % len(NAVEGADORES)])
+            time.sleep(5 * (tentativa + 1))
         else:
             if anuncios:
                 # a OLX às vezes dá 504 no meio; fica com as páginas que já vieram
