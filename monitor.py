@@ -22,6 +22,8 @@ from olx_games import CATEGORIAS, TERMOS_PADRAO, buscar_varios, lista, sem_acent
 
 PASTA = Path(__file__).resolve().parent
 ESTADO = PASTA / "vistos.json"
+# só avisa de anúncios dessas cidades (a OLX devolve a Bahia inteira)
+CIDADES_PADRAO = "Feira de Santana, Serrinha, Coração de Maria, Amélia Rodrigues"
 
 
 def carregar_env():
@@ -81,13 +83,14 @@ def main():
     p.add_argument("termos", nargs="*", help="termos de busca (padrão: lista de consoles)")
     p.add_argument("-c", "--categoria", choices=CATEGORIAS, default="todos",
                    help="todos = categoria Games (padrão); qualquer = toda a OLX, traz switch de rede, teclado etc.")
-    p.add_argument("--cidades", help='só essas cidades, separadas por vírgula, ex: "Feira de Santana, Serrinha"')
+    p.add_argument("--cidades", default=CIDADES_PADRAO,
+                   help=f'só essas cidades, separadas por vírgula (padrão: "{CIDADES_PADRAO}")')
     p.add_argument("--bairros", help='só esses bairros, ex: "Centro, Tomba, Santa Mônica"')
     p.add_argument("--so-feira", action="store_true")
     p.add_argument("--min", type=int, dest="preco_min")
     p.add_argument("--max", type=int, dest="preco_max")
-    p.add_argument("-p", "--paginas", type=int, default=2,
-                   help="páginas por termo; como ordena por recentes, 2 cobre bem uma hora (padrão 2)")
+    p.add_argument("-p", "--paginas", type=int, default=4,
+                   help="páginas por termo, da Bahia inteira; 4 cobre umas 12h nos termos mais movimentados (padrão 4)")
     p.add_argument("--teste", action="store_true", help="manda o anúncio mais recente para testar o bot")
     args = p.parse_args()
 

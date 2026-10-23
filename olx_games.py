@@ -20,6 +20,9 @@ from curl_cffi import requests
 
 BASE = "https://www.olx.com.br"
 REGIAO = "estado-ba/regiao-de-feira-de-santana-e-alagoinhas"
+# a OLX passou a ignorar a região na URL e devolver a Bahia inteira; as regiões
+# dela são por DDD, então os anúncios de fora são descartados aqui
+DDD_REGIAO = "75"
 CATEGORIAS = {
     "qualquer": "",  # toda a OLX, pega também quem anunciou fora de Games
     "todos": "games",
@@ -155,6 +158,8 @@ def buscar(categoria="todos", cidade=None, busca=None, paginas=1, recentes=True,
             break
         for ad in novos:
             vistos.add(ad["listId"])
+            if (ad.get("locationDetails") or {}).get("ddd") != DDD_REGIAO:
+                continue
             anuncio = normalizar(ad)
             anuncio["posicao"] = len(anuncios)
             anuncios.append(anuncio)

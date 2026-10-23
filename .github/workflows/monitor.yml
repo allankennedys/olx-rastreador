@@ -35,7 +35,7 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        # filtros de região: acrescente --cidades "Feira de Santana" e/ou --bairros "..."
+        # cidades permitidas: CIDADES_PADRAO no monitor.py (ou --cidades "..."); bairros: --bairros "..."
         run: python monitor.py ${{ inputs.teste && '--teste ps5 -c consoles -p 1' || '' }}
 
       - name: Salvar anúncios já vistos
