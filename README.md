@@ -57,3 +57,10 @@ O agendamento do GitHub Actions atrasa horas, então quem dispara o workflow é 
    - Headers: `Authorization: Bearer <TOKEN>`, `Accept: application/vnd.github+json`,
      `X-GitHub-Api-Version: 2022-11-28`
    - Resposta esperada: `204`.
+
+## Filtro do que é enviado (filtro.py)
+
+O monitor só avisa de consoles (inclusive com defeito/para peças), controles e lotes de console + jogos.
+Jogo avulso, carta, cabo, fonte, base, skin, VR, volante, headset, Kinect etc. são vetados e aparecem no
+log como `vetado (motivo): título`. O critério é a primeira palavra do título ("Fonte nintendo switch" é
+fonte, "Xbox 360 + 80 jogos" é console), mais a categoria e o preço.

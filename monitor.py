@@ -18,6 +18,7 @@ from pathlib import Path
 
 from curl_cffi import requests
 
+from filtro import motivo_veto
 from olx_games import CATEGORIAS, TERMOS_PADRAO, buscar_varios, lista, sem_acento
 
 PASTA = Path(__file__).resolve().parent
@@ -141,6 +142,10 @@ def main():
             if assinatura(a) in vistos:
                 log(f"  repostagem ignorada: {a['titulo']} ({a['id']})")
                 vistos.add(a["id"])
+                continue
+            if veto := motivo_veto(a):
+                log(f"  vetado ({veto}): {a['titulo']} ({a['id']})")
+                vistos |= {a["id"], assinatura(a)}
                 continue
             entregues = 0
             for chat_id in chats:
