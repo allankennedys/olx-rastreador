@@ -44,3 +44,16 @@ Sem termos, usa a lista padrão (ps5, ps4, xbox, switch, video game, console...)
    ```
    0 * * * * cd /home/kennedy/olx-games-scraper && .venv/bin/python monitor.py >> monitor.log 2>&1
    ```
+
+## Disparo a cada 15 min (cron-job.org)
+
+O agendamento do GitHub Actions atrasa horas, então quem dispara o workflow é o
+[cron-job.org](https://cron-job.org). O `schedule` do workflow (a cada 3h) fica só de reserva.
+
+1. Token do GitHub (fine-grained), só no repositório `olx-rastreador`, permissão **Actions: Read and write**.
+2. No cron-job.org, um job a cada 15 min:
+   - URL: `https://api.github.com/repos/allankennedys/olx-rastreador/actions/workflows/monitor.yml/dispatches`
+   - Método `POST`, corpo `{"ref":"main"}`
+   - Headers: `Authorization: Bearer <TOKEN>`, `Accept: application/vnd.github+json`,
+     `X-GitHub-Api-Version: 2022-11-28`
+   - Resposta esperada: `204`.

@@ -1,8 +1,10 @@
 name: Monitor OLX
 
 on:
+  # quem dispara de verdade é o cron-job.org a cada 15 min (POST em .../workflows/monitor.yml/dispatches);
+  # o agendamento do GitHub atrasa horas, fica só de reserva caso o cron-job.org pare
   schedule:
-    - cron: "0 * * * *"   # de hora em hora (UTC; o GitHub pode atrasar alguns minutos)
+    - cron: "23 */3 * * *"
   workflow_dispatch:
     inputs:
       teste:
@@ -36,7 +38,8 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         # cidades permitidas: CIDADES_PADRAO no monitor.py (ou --cidades "..."); bairros: --bairros "..."
-        run: python monitor.py ${{ inputs.teste && '--teste ps5 -c consoles -p 1' || '' }}
+        # -p 2: rodando a cada 15 min, 2 páginas por termo sobram e o job fica mais rápido
+        run: python monitor.py ${{ inputs.teste && '--teste ps5 -c consoles -p 1' || '-p 2' }}
 
       - name: Salvar anúncios já vistos
         # always(): mesmo se o monitor falhar no meio, guarda o que já foi enviado
