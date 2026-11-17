@@ -25,6 +25,10 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
+        with:
+          # a ponta atual do main, não o SHA do disparo: um run que esperou na fila
+          # precisa enxergar o vistos.json que o run anterior acabou de commitar
+          ref: main
 
       - uses: actions/setup-python@v6
         with:
