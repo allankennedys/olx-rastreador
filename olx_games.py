@@ -13,6 +13,7 @@ import re
 import sys
 import time
 import unicodedata
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
@@ -41,6 +42,7 @@ TERMOS_PADRAO = [
     "controle video game", "controle videogame", "controle playstation", "gamesir", "8bitdo",
 ]
 NAVEGADORES = ["chrome", "edge", "safari"]  # o Cloudflare às vezes barra uma assinatura e libera outra
+THREADS = 4  # buscas simultâneas; mais que isso aumenta o risco de bloqueio
 MAX_PAGINAS = 100  # a OLX não serve além da página 100
 CAMPOS = [
     "id", "titulo", "termos", "preco", "preco_antigo", "categoria", "marca", "modelo",
@@ -165,7 +167,8 @@ def buscar(categoria="todos", cidade=None, busca=None, paginas=1, recentes=True,
             anuncios.append(anuncio)
         if len(dados["ads"]) < dados.get("pageSize", 50):
             break
-        time.sleep(random.uniform(*pausa))
+        if pagina < min(paginas, MAX_PAGINAS):  # sem pausa depois da última página
+            time.sleep(random.uniform(*pausa))
     return anuncios
 
 
@@ -196,13 +199,24 @@ def buscar_varios(termos, ordem="recentes", cidades=None, bairros=None, log=prin
     qualquer uma das buscas; em "recentes", ordena pela data de publicação.
     """
     juntos = {}
-    for termo in termos:
-        log(f"[{termo or 'sem termo'}]")
+
+    def um_termo(termo):
+        linhas = []  # log guardado e impresso de uma vez, para não misturar entre threads
+        linhas.append(f"[{termo or 'sem termo'}]")
         try:
-            resultado = buscar(busca=termo, recentes=(ordem == "recentes"), log=log, **kwargs)
+            resultado = buscar(busca=termo, recentes=(ordem == "recentes"),
+                               log=linhas.append, **kwargs)
         except RuntimeError as e:
-            log(f"  pulando: {e}")
-            continue
+            linhas.append(f"  pulando: {e}")
+            resultado = []
+        return termo, resultado, linhas
+
+    with ThreadPoolExecutor(max_workers=THREADS) as pool:
+        resultados = list(pool.map(um_termo, termos))  # pool.map mantém a ordem dos termos
+
+    for termo, resultado, linhas in resultados:
+        for linha in linhas:
+            log(linha)
         for a in resultado:
             existente = juntos.get(a["id"])
             if existente:
